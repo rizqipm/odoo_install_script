@@ -18,9 +18,9 @@ Use `wget` to download the required scripts and configuration file from your Git
 
 ```bash
 # Replace <your-repo> and <branch> with your repository details
-wget https://github.com/yourusername/<your-repo>/raw/<branch>/create-odoo-user.sh
-wget https://github.com/yourusername/<your-repo>/raw/<branch>/install-odoo.sh
-wget https://github.com/yourusername/<your-repo>/raw/<branch>/odoo-install-config.sh
+wget https://github.com/rizqipm/odoo_install_script/raw/main/create-odoo-user.sh
+wget https://github.com/rizqipm/odoo_install_script/raw/main/install-odoo.sh
+wget https://github.com/rizqipm/odoo_install_script/raw/main/odoo-install-config.sh
 ```
 
 ### 2. Edit the Configuration File
