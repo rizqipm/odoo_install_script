@@ -1,18 +1,15 @@
 #!/bin/bash
 
-# Variables
-OE_USER="odoo"
-OE_HOME="/opt/$OE_USER"
-OE_HOME_EXT="$OE_HOME/odoo"
-OE_VERSION="16.0"
-OE_SUPERADMIN_PASS="admin"
-OE_CONFIG="${OE_USER}-server"
-OE_PORT="8069"
-LONGPOLLING_PORT="8072"
-CUSTOM_ADDONS_REPO="https://github.com/yourusername/odoo16_eform.git"
-CUSTOM_ADDONS_DIR="$OE_HOME/custom"
-DOMAIN="${DOMAIN:-}" # Set DOMAIN if provided, otherwise use blank
-EMAIL="${EMAIL:-}" # Set EMAIL if provided, otherwise use blank
+# Source configuration variables
+source ./odoo-install-config.sh
+
+# Extract the repository name from the URL
+REPO_NAME=$(basename -s .git "$CUSTOM_ADDONS_REPO")
+CUSTOM_ADDONS_DIR="$OE_HOME/$REPO_NAME" # Set dynamically based on the repo name
+
+# Clone the custom add-ons repository to the odoo user's home directory
+echo -e "\n---- Cloning Custom Add-ons Repository ----"
+sudo -u $OE_USER git clone $CUSTOM_ADDONS_REPO $CUSTOM_ADDONS_DIR
 
 # Determine domain or IP for Caddy configuration
 if [[ -z "$DOMAIN" || -z "$EMAIL" ]]; then

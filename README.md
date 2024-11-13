@@ -1,3 +1,6 @@
+Here’s the updated `README.md` with the new two-step script setup:
+
+```markdown
 # Odoo 16 Installation Script with Caddy Reverse Proxy
 
 This guide will walk you through setting up an SSH key, adding it to your custom Odoo add-ons repository, and running the Odoo installation script.
@@ -9,81 +12,76 @@ This guide will walk you through setting up an SSH key, adding it to your custom
 
 ## Steps
 
-### 1. Generate an SSH Key
+### 1. Download the Scripts and Configuration File
 
-Source: https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent?platform=linux
-
-First, you’ll need to create an SSH key to access the custom add-ons repository.
-
-```bash
-# Generate an SSH key (leave the passphrase empty if preferred)
-ssh-keygen -t ed25519 -C "your_email@example.com"
-```
-
-When you're prompted to "Enter a file in which to save the key", you can press Enter to accept the default file location.
-
-When you're prompted to "Enter passphrase (empty for no passphrase):", you can press Enter so we don't use passphrase
-
-This will generate a new SSH key pair:
-
-    Public key: ~/.ssh/id_ed25519.pub
-    Private key: ~/.ssh/id_ed25519
-
-### 2. Add the SSH Key as a Deploy Key on GitHub
-
-1. Open the GitHub repository for your custom add-ons (e.g., odoo16_eform).
-
-2. Go to Settings > Deploy keys > Add deploy key.
-
-3. Copy the public key to your clipboard:
-
-```bash
-cat ~/.ssh/id_ed25519.pub
-```
-
-4. In GitHub, paste the key into the Key field.
-
-5. Give it a title like "Odoo Server Deploy Key" and Enable read-only access.
-
-6. Click Add key.
-
-
-### 3. Download the Installation Script
-
-Use wget to download the installation script from your GitHub repository.
+Use `wget` to download the required scripts and configuration file from your GitHub repository.
 
 ```bash
 # Replace <your-repo> and <branch> with your repository details
-wget https://github.com/rizqipm/odoo_install_script/raw/main/odoo-install.sh -O odoo-install.sh
+wget https://github.com/yourusername/<your-repo>/raw/<branch>/create-odoo-user.sh
+wget https://github.com/yourusername/<your-repo>/raw/<branch>/install-odoo.sh
+wget https://github.com/yourusername/<your-repo>/raw/<branch>/odoo-install-config.sh
 ```
 
-### 4. Set Execute Permissions
+### 2. Edit the Configuration File
 
-Set the script as executable.
+Before running the scripts, open the `odoo-install-config.sh` file to adjust the configuration variables as needed. Specifically, you may want to edit:
+
+- **DOMAIN**: The domain name for your Odoo server (e.g., `odoo.yourdomain.com`). Leave blank to use the server’s IP address.
+- **EMAIL**: Your email address for SSL certificate registration with Let's Encrypt.
+- **CUSTOM_ADDONS_REPO**: URL to your custom add-ons repository.
+- **OE_SUPERADMIN**: Set the Odoo super admin password, which will be used in the configuration file.
+- Other variables as needed to customize the installation, such as Odoo version or ports.
+
+Open the file in a text editor to make changes:
+
 ```bash
-chmod +x odoo-install.sh
+nano odoo-install-config.sh
 ```
 
-### 5. Run the Installation Script
+### 3. Set Execute Permissions for the Scripts
 
-Now you can execute the script to install Odoo, PostgreSQL, and Caddy as a reverse proxy. The script will also configure an update script in the ubuntu user’s home directory.
+Make both scripts executable.
 
 ```bash
-sudo ./odoo-install.sh
+chmod +x create-odoo-user.sh install-odoo.sh
+```
+
+### 4. Run the First Script to Create the Odoo User and SSH Key
+
+Run the `create-odoo-user.sh` script to create the `odoo` user, generate an SSH key, and display the public key for use as a GitHub deploy key.
+
+```bash
+./create-odoo-user.sh
+```
+
+After running this script:
+1. Copy the displayed public key.
+2. Go to your custom add-ons GitHub repository.
+3. Navigate to **Settings > Deploy keys > Add deploy key**.
+4. Paste the public key into the **Key** field, give it a name (e.g., "Odoo Server Deploy Key"), and enable **Allow write access** if needed.
+5. Click **Add key**.
+
+### 5. Run the Second Script to Install Odoo and Configure the System
+
+After adding the SSH deploy key, run the `install-odoo.sh` script to install Odoo, PostgreSQL, and Caddy as a reverse proxy. This script will also set up an update script in the `ubuntu` user’s home directory.
+
+```bash
+sudo ./install-odoo.sh
 ```
 
 ### 6. Post-Installation Information
 
 After the installation completes, you’ll see details such as:
 
-    The location of the Odoo configuration file.
-    Instructions for managing the Odoo service with systemctl.
-    Path to the Caddy configuration file.
-    Location of the update script for pulling updates to custom add-ons.
+- The location of the **Odoo configuration file**.
+- Instructions for managing the Odoo service with `systemctl`.
+- Path to the **Caddy configuration file**.
+- Location of the **update script** for pulling updates to custom add-ons.
 
 ## Additional Commands
 
-    To manage the Odoo service:
+To manage the Odoo service:
 
 ```bash
 sudo systemctl {start|stop|restart|status} odoo-server
@@ -94,4 +92,3 @@ To run the update script:
 ```bash
 /home/ubuntu/update-odoo.sh
 ```
-This installation sets up Odoo 16 as a service, reverse-proxied through Caddy with optional HTTPS, and includes a script for updating custom add-ons.
