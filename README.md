@@ -1,6 +1,6 @@
 Here’s the updated `README.md` with the new two-step script setup:
 
-```markdown
+
 # Odoo 16 Installation Script with Caddy Reverse Proxy
 
 This guide will walk you through setting up an SSH key, adding it to your custom Odoo add-ons repository, and running the Odoo installation script.
