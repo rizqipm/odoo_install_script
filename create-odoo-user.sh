@@ -4,7 +4,7 @@
 source ./odoo-install-config.sh
 
 # SSH Key Path
-SSH_KEY_PATH="$OE_HOME/.ssh/id_rsa_odoo"
+SSH_KEY_PATH="$OE_HOME/.ssh/id_ed25519"
 
 # Step 1: Create the odoo user with a home directory
 echo "Creating the $OE_USER user with a home directory..."

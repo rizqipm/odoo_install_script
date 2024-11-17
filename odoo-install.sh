@@ -7,6 +7,11 @@ source ./odoo-install-config.sh
 REPO_NAME=$(basename -s .git "$CUSTOM_ADDONS_REPO")
 CUSTOM_ADDONS_DIR="$OE_HOME/$REPO_NAME" # Set dynamically based on the repo name
 
+# Ensure the odoo user has the correct permissions on its home directory
+echo -e "\n---- Setting permissions for the $OE_USER home directory ----"
+sudo chown -R $OE_USER:$OE_USER $OE_HOME
+sudo chmod -R 755 $OE_HOME
+
 # Clone the custom add-ons repository to the odoo user's home directory
 echo -e "\n---- Cloning Custom Add-ons Repository ----"
 sudo -u $OE_USER git clone $CUSTOM_ADDONS_REPO $CUSTOM_ADDONS_DIR
@@ -45,9 +50,8 @@ sudo adduser --system --home=$OE_HOME --group $OE_USER
 
 # Clone Odoo and Custom Add-ons
 echo -e "\n---- Cloning Odoo and Custom Add-ons Repositories ----"
-sudo mkdir -p $OE_HOME
 sudo git clone --depth 1 --branch $OE_VERSION https://github.com/odoo/odoo.git $OE_HOME_EXT
-sudo git clone $CUSTOM_ADDONS_REPO $CUSTOM_ADDONS_DIR
+sudo -u $OE_USER git clone $CUSTOM_ADDONS_REPO $CUSTOM_ADDONS_DIR
 
 # Install Odoo Dependencies
 echo -e "\n---- Installing Odoo Dependencies ----"
