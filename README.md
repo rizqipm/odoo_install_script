@@ -19,7 +19,7 @@ Use `wget` to download the required scripts and configuration file from your Git
 ```bash
 # Replace <your-repo> and <branch> with your repository details
 wget https://github.com/rizqipm/odoo_install_script/raw/main/create-odoo-user.sh
-wget https://github.com/rizqipm/odoo_install_script/raw/main/install-odoo.sh
+wget https://github.com/rizqipm/odoo_install_script/raw/main/odoo-install.sh
 wget https://github.com/rizqipm/odoo_install_script/raw/main/odoo-install-config.sh
 ```
 
@@ -44,7 +44,7 @@ nano odoo-install-config.sh
 Make both scripts executable.
 
 ```bash
-chmod +x create-odoo-user.sh install-odoo.sh
+chmod +x create-odoo-user.sh odoo-install.sh
 ```
 
 ### 4. Run the First Script to Create the Odoo User and SSH Key
@@ -64,10 +64,10 @@ After running this script:
 
 ### 5. Run the Second Script to Install Odoo and Configure the System
 
-After adding the SSH deploy key, run the `install-odoo.sh` script to install Odoo, PostgreSQL, and Caddy as a reverse proxy. This script will also set up an update script in the `ubuntu` user’s home directory.
+After adding the SSH deploy key, run the `odoo-install.sh` script to install Odoo, PostgreSQL, and Caddy as a reverse proxy. This script will also set up an update script in the `ubuntu` user’s home directory.
 
 ```bash
-sudo ./install-odoo.sh
+sudo ./odoo-install.sh
 ```
 
 ### 6. Post-Installation Information
