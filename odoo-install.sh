@@ -99,30 +99,76 @@ sudo systemctl daemon-reload
 sudo systemctl start $OE_CONFIG
 sudo systemctl enable $OE_CONFIG
 
-# Install Caddy
-echo -e "\n---- Installing Caddy ----"
-sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https
-curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-archive-keyring.gpg
-curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
-sudo apt update
-sudo apt install -y caddy
+# Install Nginx
+echo -e "\n---- Installing Nginx ----"
+sudo apt install -y nginx
 
-# Configure Caddyfile for Odoo reverse proxy
-echo -e "\n---- Configuring Caddy ----"
-sudo bash -c "cat <<EOF > /etc/caddy/Caddyfile
-$CADDY_ADDRESS {
-    reverse_proxy 127.0.0.1:$OE_PORT
-    reverse_proxy /longpolling 127.0.0.1:$LONGPOLLING_PORT
-    log {
-        output file /var/log/caddy/odoo-access.log
+# Configure Nginx for Odoo
+echo -e "\n---- Configuring Nginx ----"
+sudo bash -c "cat <<EOF > /etc/nginx/sites-available/odoo
+server {
+    listen 80;
+
+    proxy_set_header Host $host;
+    # Add Headers for odoo proxy mode
+    proxy_set_header X-Forwarded-Host \$host;
+    proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto \$scheme;
+    proxy_set_header X-Real-IP \$remote_addr;
+    add_header X-Frame-Options "SAMEORIGIN";
+    add_header X-XSS-Protection "1; mode=block";
+    proxy_set_header X-Client-IP \$remote_addr;
+    proxy_set_header HTTP_X_FORWARDED_HOST \$remote_addr;
+
+    #   odoo    log files
+    access_log  /var/log/nginx/odoo-access.log;
+    error_log       /var/log/nginx/odoo-error.log;
+
+    #   increase    proxy   buffer  size
+    proxy_buffers   16  64k;
+    proxy_buffer_size   128k;
+
+    proxy_read_timeout 900s;
+    proxy_connect_timeout 900s;
+    proxy_send_timeout 900s;
+
+    #   force   timeouts    if  the backend dies
+    proxy_next_upstream error   timeout invalid_header  http_500    http_502
+    http_503;
+
+    types {
+    text/less less;
+    text/scss scss;
+    }
+
+    #   enable  data    compression
+    gzip    on;
+    gzip_min_length 1100;
+    gzip_buffers    4   32k;
+    gzip_types  text/css text/less text/plain text/xml application/xml application/json application/javascript application/pdf image/jpeg image/png;
+    gzip_vary   on;
+    client_header_buffer_size 4k;
+    large_client_header_buffers 4 64k;
+    client_max_body_size 0;
+
+    location / {
+        proxy_pass http://127.0.0.1:$OE_PORT;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+
+    location /longpolling {
+        proxy_pass http://127.0.0.1:$LONGPOLLING_PORT;
     }
 }
 EOF"
 
-# Ensure log directory exists and restart Caddy
-sudo mkdir -p /var/log/caddy
-sudo chown caddy:caddy /var/log/caddy
-sudo systemctl restart caddy
+# Enable and restart Nginx
+sudo ln -s /etc/nginx/sites-available/odoo /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl restart nginx
+
 
 # Create update script in ubuntu's home directory
 echo -e "\n---- Creating Update Script in Ubuntu's Home Directory ----"
@@ -145,8 +191,8 @@ sudo chown ubuntu:ubuntu /home/ubuntu/update-odoo.sh
 
 echo "-----------------------------------------------------------"
 echo "Odoo 16 installation completed and is running as a service."
-echo "Caddy is installed and configured as a reverse proxy."
-echo "Caddyfile location: /etc/caddy/Caddyfile"
+echo "Nginx is installed and configured as a reverse proxy."
+echo "Nginx location: /etc/nginx/site-available/odoo"
 echo "Odoo Configuration file: /etc/${OE_CONFIG}.conf"
 echo "Service management: sudo systemctl {start|stop|status} ${OE_CONFIG}"
 echo "Update script: /home/ubuntu/update-odoo.sh"

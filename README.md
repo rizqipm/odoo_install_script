@@ -70,6 +70,10 @@ After adding the SSH deploy key, run the `odoo-install.sh` script to install Odo
 sudo ./odoo-install.sh
 ```
 
+### Optional Certbot for HTTPS Nginx
+
+follow instruction from https://certbot.eff.org/instructions?ws=nginx&os=ubuntufocal
+
 ### 6. Post-Installation Information
 
 After the installation completes, you’ll see details such as:
