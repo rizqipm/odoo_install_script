@@ -8,9 +8,9 @@ REPO_NAME=$(basename -s .git "$CUSTOM_ADDONS_REPO")
 CUSTOM_ADDONS_DIR="$OE_HOME/$REPO_NAME" # Set dynamically based on the repo name
 
 # Ensure the odoo user has the correct permissions on its home directory
-echo -e "\n---- Setting permissions for the $OE_USER home directory ----"
-sudo chown -R $OE_USER:$OE_USER $OE_HOME
-sudo chmod -R 755 $OE_HOME
+# echo -e "\n---- Setting permissions for the $OE_USER home directory ----"
+# sudo chown -R $OE_USER:$OE_USER $OE_HOME
+# sudo chmod -R 755 $OE_HOME
 
 # Clone the custom add-ons repository to the odoo user's home directory
 echo -e "\n---- Cloning Custom Add-ons Repository ----"

@@ -1,7 +1,7 @@
 Here’s the updated `README.md` with the new two-step script setup:
 
 
-# Odoo 16 Installation Script with Caddy Reverse Proxy
+# Odoo 16 Installation Script with ~~Caddy~~ Nginx Reverse Proxy
 
 This guide will walk you through setting up an SSH key, adding it to your custom Odoo add-ons repository, and running the Odoo installation script.
 
@@ -64,7 +64,7 @@ After running this script:
 
 ### 5. Run the Second Script to Install Odoo and Configure the System
 
-After adding the SSH deploy key, run the `odoo-install.sh` script to install Odoo, PostgreSQL, and Caddy as a reverse proxy. This script will also set up an update script in the `ubuntu` user’s home directory.
+After adding the SSH deploy key, run the `odoo-install.sh` script to install Odoo, PostgreSQL, and ~~Caddy~~ Nginx as a reverse proxy. This script will also set up an update script in the `ubuntu` user’s home directory.
 
 ```bash
 sudo ./odoo-install.sh
@@ -76,7 +76,7 @@ After the installation completes, you’ll see details such as:
 
 - The location of the **Odoo configuration file**.
 - Instructions for managing the Odoo service with `systemctl`.
-- Path to the **Caddy configuration file**.
+- Path to the **~~Caddy~~ Nginx configuration file**.
 - Location of the **update script** for pulling updates to custom add-ons.
 
 ## Additional Commands

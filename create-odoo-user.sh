@@ -18,6 +18,9 @@ echo "Generating SSH key for the $OE_USER user..."
 sudo -u $OE_USER ssh-keygen -t ed25519 -C "$GIT_EMAIL" -f $SSH_KEY_PATH -N ""
 echo "SSH key generated at $SSH_KEY_PATH"
 
+echo "Starting the SSH agent and adding the key..."
+sudo -u $OE_USER bash -c "eval \"\$(ssh-agent -s)\" && ssh-add $SSH_KEY_PATH"
+
 # Step 3: Display the public key and prompt the user to add it as a GitHub deploy key
 echo "The public key for the $OE_USER user is shown below:"
 echo "-------------------------------------------------"
