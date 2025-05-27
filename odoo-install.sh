@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # Source configuration variables
 source ./odoo-install-config.sh
@@ -58,20 +59,31 @@ echo -e "\n---- Installing Odoo Dependencies ----"
 cd $OE_HOME_EXT
 sudo ./setup/debinstall.sh
 
-# Create Odoo configuration file
+# Create Odoo configuration file atomically and robustly
 echo -e "\n---- Creating Odoo Configuration File ----"
-sudo touch /etc/${OE_CONFIG}.conf
-sudo su root -c "printf '[options]\n' >> /etc/${OE_CONFIG}.conf"
-sudo su root -c "printf 'admin_passwd = ${OE_SUPERADMIN_PASS}\n' >> /etc/${OE_CONFIG}.conf"
-sudo su root -c "printf 'db_user = $OE_USER\n' >> /etc/${OE_CONFIG}.conf"
-sudo su root -c "printf 'addons_path = ${OE_HOME_EXT}/addons,${CUSTOM_ADDONS_DIR}/addons\n' >> /etc/${OE_CONFIG}.conf"
-sudo su root -c "printf 'logfile = /var/log/${OE_CONFIG}.log\n' >> /etc/${OE_CONFIG}.conf"
-sudo su root -c "printf 'http_port = ${OE_PORT}\n' >> /etc/${OE_CONFIG}.conf"
-sudo su root -c "printf 'longpolling_port = ${LONGPOLLING_PORT}\n' >> /etc/${OE_CONFIG}.conf"
 
-# Set permissions for the configuration file
+# Write config to a temporary file as root, then move it atomically
+sudo bash -c "cat > /tmp/${OE_CONFIG}.conf <<EOF
+[options]
+admin_passwd = ${OE_SUPERADMIN_PASS}
+db_user = $OE_USER
+addons_path = ${OE_HOME_EXT}/addons,${CUSTOM_ADDONS_DIR}/addons
+logfile = /var/log/${OE_CONFIG}.log
+http_port = ${OE_PORT}
+longpolling_port = ${LONGPOLLING_PORT}
+EOF
+"
+
+# Move to final destination atomically and set permissions
+sudo mv /tmp/${OE_CONFIG}.conf /etc/${OE_CONFIG}.conf
 sudo chown $OE_USER:$OE_USER /etc/${OE_CONFIG}.conf
 sudo chmod 640 /etc/${OE_CONFIG}.conf
+
+# Confirm config file exists and is not empty
+if [ ! -s /etc/${OE_CONFIG}.conf ]; then
+    echo "ERROR: Odoo config file was not created correctly!" >&2
+    exit 1
+fi
 
 # Create systemd service file for Odoo
 echo -e "\n---- Creating systemd Service File ----"
@@ -153,10 +165,8 @@ server {
 
     location / {
         proxy_pass http://127.0.0.1:$OE_PORT;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
+        # by default, do not forward anything
+        proxy_redirect off;
     }
 
     location /longpolling {
@@ -165,7 +175,8 @@ server {
 }
 EOF"
 
-# Enable and restart Nginx
+# remove default, Enable and restart Nginx
+sudo rm /etc/nginx/sites-enabled/default 
 sudo ln -s /etc/nginx/sites-available/odoo /etc/nginx/sites-enabled/
 sudo nginx -t && sudo systemctl restart nginx
 

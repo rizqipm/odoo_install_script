@@ -6,7 +6,7 @@ OE_HOME="/home/$OE_USER"
 OE_HOME_EXT="$OE_HOME/odoo"
 
 # Odoo Configuration Variables
-OE_VERSION="16.0"
+OE_VERSION="18.0"
 OE_SUPERADMIN="admin"
 OE_CONFIG="${OE_USER}-server"
 OE_PORT="8069"

@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -e
 # Source configuration variables
 source ./odoo-install-config.sh
 
