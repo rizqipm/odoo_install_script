@@ -51,13 +51,27 @@ sudo adduser --system --home=$OE_HOME --group $OE_USER
 
 # Clone Odoo and Custom Add-ons
 echo -e "\n---- Cloning Odoo and Custom Add-ons Repositories ----"
-sudo git clone --depth 1 --branch $OE_VERSION https://github.com/odoo/odoo.git $OE_HOME_EXT
+sudo -u $OE_USER git clone --depth 1 --branch $OE_VERSION https://github.com/odoo/odoo.git $OE_HOME_EXT
 sudo -u $OE_USER git clone $CUSTOM_ADDONS_REPO $CUSTOM_ADDONS_DIR
 
 # Install Odoo Dependencies
 echo -e "\n---- Installing Odoo Dependencies ----"
-cd $OE_HOME_EXT
-sudo ./setup/debinstall.sh
+sudo apt-get install -y build-essential python3-dev libpq-dev libsasl2-dev libldap2-dev libssl-dev
+sudo -H -u $OE_USER bash -c "cd $OE_HOME_EXT && ./setup/debinstall.sh"
+
+# --- Define VENV Directory ---
+VENV_DIR="$OE_HOME/venv"
+
+sudo apt install python3-venv -y
+
+echo -e "\n---- Creating Python Virtual Environment for Odoo ----"
+sudo -u $OE_USER python3 -m venv $VENV_DIR
+
+echo -e "\n---- Upgrading pip inside the venv ----"
+sudo -u $OE_USER $VENV_DIR/bin/pip install --upgrade pip
+
+echo -e "\n---- Installing Odoo Python requirements inside the venv ----"
+sudo -u $OE_USER $VENV_DIR/bin/pip install -r $OE_HOME_EXT/requirements.txt
 
 # Create Odoo configuration file atomically and robustly
 echo -e "\n---- Creating Odoo Configuration File ----"
@@ -89,13 +103,13 @@ fi
 echo -e "\n---- Creating systemd Service File ----"
 sudo bash -c "cat <<EOF > /etc/systemd/system/$OE_CONFIG.service
 [Unit]
-Description=Odoo 16 Service
+Description=Odoo 18 Service
 After=network.target
 
 [Service]
 Type=simple
 User=$OE_USER
-ExecStart=/usr/bin/python3 $OE_HOME_EXT/odoo-bin -c /etc/${OE_CONFIG}.conf
+ExecStart=$OE_HOME/venv/bin/python $OE_HOME_EXT/odoo-bin -c /etc/${OE_CONFIG}.conf
 Restart=always
 
 [Install]
@@ -115,20 +129,18 @@ sudo systemctl enable $OE_CONFIG
 echo -e "\n---- Installing Nginx ----"
 sudo apt install -y nginx
 
-# Configure Nginx for Odoo
-echo -e "\n---- Configuring Nginx ----"
-sudo bash -c "cat <<EOF > /etc/nginx/sites-available/odoo
+sudo bash -c "cat <<'EOF' > /etc/nginx/sites-available/odoo
 server {
     listen 80;
 
-    proxy_set_header Host $host;
+    proxy_set_header Host \$host;
     # Add Headers for odoo proxy mode
     proxy_set_header X-Forwarded-Host \$host;
     proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto \$scheme;
     proxy_set_header X-Real-IP \$remote_addr;
-    add_header X-Frame-Options "SAMEORIGIN";
-    add_header X-XSS-Protection "1; mode=block";
+    add_header X-Frame-Options \"SAMEORIGIN\";
+    add_header X-XSS-Protection \"1; mode=block\";
     proxy_set_header X-Client-IP \$remote_addr;
     proxy_set_header HTTP_X_FORWARDED_HOST \$remote_addr;
 
@@ -145,8 +157,7 @@ server {
     proxy_send_timeout 900s;
 
     #   force   timeouts    if  the backend dies
-    proxy_next_upstream error   timeout invalid_header  http_500    http_502
-    http_503;
+    proxy_next_upstream error   timeout invalid_header  http_500    http_502 http_503;
 
     types {
     text/less less;
@@ -181,9 +192,8 @@ sudo ln -s /etc/nginx/sites-available/odoo /etc/nginx/sites-enabled/
 sudo nginx -t && sudo systemctl restart nginx
 
 
-# Create update script in ubuntu's home directory
 echo -e "\n---- Creating Update Script in Ubuntu's Home Directory ----"
-sudo bash -c "cat <<EOF > /home/ubuntu/update-odoo.sh
+sudo tee /home/ubuntu/update-odoo.sh > /dev/null <<'EOF'
 #!/bin/bash
 ###############################################
 # Script for updating Odoo
@@ -194,14 +204,13 @@ sudo -u $OE_USER -H sh -c 'cd $CUSTOM_ADDONS_DIR; git pull origin main'
 echo 'Restarting Odoo service'
 sudo systemctl restart $OE_CONFIG.service
 echo 'Update complete'
-EOF"
+EOF
 
-# Make the update script executable
 sudo chmod +x /home/ubuntu/update-odoo.sh
 sudo chown ubuntu:ubuntu /home/ubuntu/update-odoo.sh
 
 echo "-----------------------------------------------------------"
-echo "Odoo 16 installation completed and is running as a service."
+echo "Odoo 18 installation completed and is running as a service."
 echo "Nginx is installed and configured as a reverse proxy."
 echo "Nginx location: /etc/nginx/site-available/odoo"
 echo "Odoo Configuration file: /etc/${OE_CONFIG}.conf"
