@@ -14,8 +14,8 @@ CUSTOM_ADDONS_DIR="$OE_HOME/$REPO_NAME" # Set dynamically based on the repo name
 # sudo chmod -R 755 $OE_HOME
 
 # Clone the custom add-ons repository to the odoo user's home directory
-echo -e "\n---- Cloning Custom Add-ons Repository ----"
-sudo -u $OE_USER git clone $CUSTOM_ADDONS_REPO $CUSTOM_ADDONS_DIR
+# echo -e "\n---- Cloning Custom Add-ons Repository ----"
+# sudo -u $OE_USER git clone $CUSTOM_ADDONS_REPO $CUSTOM_ADDONS_DIR
 
 # Determine domain or IP for Caddy configuration
 if [[ -z "$DOMAIN" || -z "$EMAIL" ]]; then
